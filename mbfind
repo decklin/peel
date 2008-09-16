@@ -8,8 +8,6 @@ except ImportError, e:
     print >>sys.stderr, 'import: %s' % e
     sys.exit(1)
 
-import lastfm.mbutil
-
 def print_selected_album(mb):
     id = mb.GetIDFromURL(mb.GetResultData(musicbrainz.MBE_AlbumGetAlbumId))
     album = mb.GetResultData(musicbrainz.MBE_AlbumGetAlbumName)
@@ -35,8 +33,6 @@ def print_selected_album(mb):
 if __name__ == '__main__':
     shortopts = 'a:b:v'
     longopts = ['artist=', 'album=', 'verbose']
-
-    sys.stdout = lastfm.mbutil.EncodedFile(sys.stdout)
 
     mb = musicbrainz.mb()
     mb.SetDepth(4)

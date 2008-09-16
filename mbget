@@ -8,8 +8,6 @@ except ImportError, e:
     print >>sys.stderr, 'import: %s' % e
     sys.exit(1)
 
-import lastfm.mbutil
-
 class Abby(musicbrainz.mb):
     def __init__(self):
         musicbrainz.mb.__init__(self)
@@ -142,8 +140,6 @@ if __name__ == '__main__':
     except getopt.GetoptError, e:
         print >>sys.stderr, 'getopt: %s' % e
         sys.exit(1)
-
-    sys.stdout = lastfm.mbutil.EncodedFile(sys.stdout)
 
     abby = Abby()
     discid = None
