@@ -73,8 +73,8 @@ class Lame(Command):
         return popen(argv, 'w')
 
 def sox_open(path):
-    return popen(['sox', path, '-t', 'raw', '-s', '-w', '-r', '44100', '-c',
-        '2', '-'])
+    return popen(['sox', path, '-t', 'raw', '-r', '44100', '-c', '2', '-s',
+        '-'])
 
 rippers = {'cdparanoia': CdParanoia}
 players = {'aplay': APlay, 'bfp': Bfp}
