@@ -1,7 +1,10 @@
 1.0.1 (2008-09-24)
 ==================
 
-* Split ourselves off from the lastfmsubmitd package. Older history can
-  be found in NEWS over there (before 1.0). Since peel is optionally
-  a lastfmsubmitd client and uses its Python API, you'll still need
-  to have it installed locally if you want to submit to Last.fm.
+  * Split ourselves off from the lastfmsubmitd package. Older history
+    can be found in NEWS over there (before 1.0). Since peel is
+    optionally a lastfmsubmitd client and uses its Python API, you'll
+    still need to have it installed locally if you want to submit to
+    Last.fm.
+
+  * Fix sox invocation (-w is deprecated).
