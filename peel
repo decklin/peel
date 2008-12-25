@@ -159,7 +159,11 @@ if __name__ == '__main__':
 
         while len(buf) > 0 or not rip.closed:
             while len(buf) < BUF_MAX and not rip.closed:
-                rd, wr, ex = select.select([rip], [], [], 0)
+                if buf:
+                    timeout = 0
+                else:
+                    timeout = None
+                rd, wr, ex = select.select([rip], [], [], timeout)
                 if rip in rd:
                     raw = rip.read(BUF_CHUNK)
                     if len(raw) > 0:
