@@ -152,13 +152,23 @@ if __name__ == '__main__':
         else:
             rip = sox_open('track%02d.cdda.wav' % song['number'])
 
+        # initial read in blocking mode
         buf = [rip.read(BUF_CHUNK) for i in range(0, BUF_INIT)]
 
         flags = fcntl.fcntl(rip, fcntl.F_GETFL)
         fcntl.fcntl(rip, fcntl.F_SETFL, flags|os.O_NONBLOCK)
 
+        # as long as there's something to write or read
         while len(buf) > 0 or not rip.closed:
-            while len(buf) < BUF_MAX and not rip.closed:
+            # only write one chunk each time through the loop
+            if len(buf) > 0:
+                raw = buf.pop(0)
+                enc.write(raw)
+                if not quiet:
+                    play.write(raw)
+            # read if we can and we're not full
+            while not rip.closed and len(buf) < BUF_MAX:
+                # but don't block if we have audio to push out
                 if buf:
                     timeout = 0
                 else:
@@ -172,11 +182,6 @@ if __name__ == '__main__':
                         rip.close()
                 else:
                     break
-            if len(buf) > 0:
-                raw = buf.pop(0)
-                enc.write(raw)
-                if not quiet:
-                    play.write(raw)
 
         if not quiet:
             if song['length'] >= 30:
