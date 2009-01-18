@@ -163,9 +163,9 @@ if __name__ == '__main__':
         fcntl.fcntl(rip, fcntl.F_SETFL, flags|os.O_NONBLOCK)
 
         # as long as there's something to write or read
-        while len(buf) > 0 or not rip.closed:
+        while buf or not rip.closed:
             # only write one chunk each time through the loop
-            if len(buf) > 0:
+            if buf:
                 raw = buf.pop(0)
                 enc.write(raw)
                 if not quiet:
