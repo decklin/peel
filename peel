@@ -130,7 +130,10 @@ if __name__ == '__main__':
         cli = lastfm.client.Client('peel')
         cli.open_log()
 
-    for song in lastfm.marshaller.load_documents(sys.stdin):
+    buf = []
+    songs = lastfm.marshaller.load_documents(sys.stdin)
+
+    for song in songs:
         print "Track %(number)s: %(title)s..." % song
 
         safe_song = {}
@@ -152,8 +155,9 @@ if __name__ == '__main__':
         else:
             rip = sox_open('track%02d.cdda.wav' % song['number'])
 
-        # initial read in blocking mode
-        buf = [rip.read(BUF_CHUNK) for i in range(0, BUF_INIT)]
+        # initial read in blocking mode (ideally, first track only)
+        if not buf:
+            buf = [rip.read(BUF_CHUNK) for i in range(0, BUF_INIT)]
 
         flags = fcntl.fcntl(rip, fcntl.F_GETFL)
         fcntl.fcntl(rip, fcntl.F_SETFL, flags|os.O_NONBLOCK)
@@ -182,6 +186,8 @@ if __name__ == '__main__':
                         rip.close()
                 else:
                     break
+            if rip.closed and song != songs[-1]:
+                break
 
         if not quiet:
             if song['length'] >= 30:
