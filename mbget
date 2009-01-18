@@ -173,8 +173,6 @@ if __name__ == '__main__':
             if args:
                 tracks = [tracks[int(a)-1] for a in args]
             for t in tracks:
-                # The serialized format is UTF-8, but when printing, we need
-                # to encode to stdout instead... this is ugly.
-                print lastfm.marshaller.dump(t).decode('utf-8')
+                print lastfm.marshaller.dump(t)
     else:
         sys.exit(1)
