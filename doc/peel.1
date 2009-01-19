@@ -1,0 +1,25 @@
+.TH lastfm 1
+.SH NAME
+peel \- CD ripper
+.SH SYNOPSIS
+.B peel [-q] [-c] < TRACKS
+.SH DESCRIPTION
+.B peel
+rips and encodes the tracks specified on standard input, using
+cdparanoia and (by default) oggenc.
+.SH OPTIONS
+.TP
+.B \-q, \-\-quiet
+Do not play songs as they are ripped.
+.TP
+.B \-c, \-\-continue
+Instead of invoking cdparanoia, read from WAV files in the current
+directory named as with cdparanoia -B.
+.SH EXAMPLES
+mbget | vipe | peel
+.P
+cdparanoia -B; mbget | peel -c
+.SH FILES
+$HOME/.peelrc
+.SH AUTHOR
+Decklin Foster <decklin@red-bean.com>.

@@ -28,6 +28,7 @@ setup(
     data_files=[
         ('share/man/man1', [
             'doc/mbget.1',
+            'doc/peel.1',
             ]),
         ],
     )

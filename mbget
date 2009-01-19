@@ -2,11 +2,7 @@
 
 import sys
 import getopt
-try:
-    import musicbrainz
-except ImportError, e:
-    print >>sys.stderr, 'import: %s' % e
-    sys.exit(1)
+import musicbrainz
 
 class Abby(musicbrainz.mb):
     def __init__(self):
