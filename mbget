@@ -3,6 +3,7 @@
 import sys
 import getopt
 import musicbrainz
+import lastfm.marshaller
 
 class Abby(musicbrainz.mb):
     def __init__(self):
@@ -128,8 +129,9 @@ def freedb_dump(albumartist, album, discid, tracks):
     print '.'
 
 if __name__ == '__main__':
-    shortopts = 'd:pi:a:ft'
-    longopts = ['device=', 'print-discid', 'discid=', 'albumid=', 'freedb', 'template']
+    shortopts = 'd:pi:a:fst'
+    longopts = ['device=', 'print-discid', 'discid=', 'albumid=', 'freedb',
+                'summary', 'template']
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
@@ -141,6 +143,7 @@ if __name__ == '__main__':
     discid = None
     albumid = None
     freedb = False
+    summary = False
     template = False
 
     for opt, arg in opts:
@@ -155,6 +158,8 @@ if __name__ == '__main__':
             albumid = arg
         elif opt in ('--freedb', '-f'):
             freedb = True
+        elif opt in ('--summary', '-s'):
+            summary = True
         elif opt in ('--template', '-t'):
             template = True
 
@@ -165,10 +170,12 @@ if __name__ == '__main__':
         if freedb:
             freedb_dump(albumartist, album, discid, tracks)
         else:
-            import lastfm.marshaller
             if args:
                 tracks = [tracks[int(a)-1] for a in args]
             for t in tracks:
-                print lastfm.marshaller.dump(t)
+                if summary:
+                    print '%2d. %s' % (t['number'], lastfm.repr(t))
+                else:
+                    print lastfm.marshaller.dump(t)
     else:
         sys.exit(1)

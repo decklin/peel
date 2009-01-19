@@ -1,12 +1,13 @@
 #!/bin/sh
 
-tmp=$(mktemp -t peel.XXXXXXXXXX)
-until mbget >"$tmp"; do
+until mbget -s; do
     echo "Could not find disc. Trying to submit to MusicBrainz..."
     mbsubmit
 done
 
-${PAGER:-more} "$tmp"
+tmp=$(mktemp -t peel.XXXXXXXXXX)
+mbget >"$tmp"
+
 echo -n "Is this data OK? (yes/edit/quit) "
 read ans
 
@@ -15,5 +16,5 @@ case "$ans" in
     q) exit 0;;
 esac
 
-peel < "$tmp" | ${UNPEEL_PLAY:-funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE}
+peel <"$tmp" | ${UNPEEL_PLAY:-funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE}
 rm -f "$tmp"
