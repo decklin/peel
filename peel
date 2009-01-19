@@ -21,27 +21,28 @@ def popen(cmd, mode='r', bufsize=-1):
     return os.popen(cmd.encode(sys.getfilesystemencoding()), mode, bufsize)
 
 class Command:
+    song_opts = {}
     def __init__(self, user_opts):
         self.user_opts = user_opts
-    def mk_args(self, song):
-        args = []
-        for key, opt in self.opts.items():
+    def args(self, song=None):
+        args = [self.user_opts]
+        for key, opt in self.song_opts.items():
             try: args.append(opt(song[key]))
             except KeyError: pass
         return ' '.join(args)
 
 class CdParanoia(Command):
     def open(self, device, number):
-        return popen('cdparanoia %s -r -d "%s" %d -' % (self.user_opts, device,
+        return popen('cdparanoia %s -r -d "%s" %d -' % (self.args(), device,
             number))
 
 class Sox(Command):
     def open(self, device, number):
         return popen('sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -s -' %
-            (self.user_opts, number))
+            (self.args(), number))
 
 class OggEnc(Command):
-    opts = {
+    song_opts = {
         'artist': lambda s: '-a "%s"' % quotemeta(s),
         'title': lambda s: '-t "%s"' % quotemeta(s),
         'album': lambda s: '-l "%s"' % quotemeta(s),
@@ -50,10 +51,10 @@ class OggEnc(Command):
         }
     def open(self, song, path):
         return popen('oggenc -Q -r %s %s -o "%s.ogg" -' % (self.user_opts,
-            self.mk_args(song), path), 'w', BUF_LARGE)
+            self.args(song), path), 'w', BUF_LARGE)
 
 class Lame(Command):
-    opts = {
+    song_opts = {
         'artist': lambda s: '--ta "%s"' % quotemeta(s),
         'title': lambda s: '--tt "%s"' % quotemeta(s),
         'album': lambda s: '--tl "%s"' % quotemeta(s),
@@ -61,7 +62,7 @@ class Lame(Command):
         }
     def open(self, song, path):
         return popen('lame --quiet -rx %s %s - "%s.mp3"' % (self.user_opts,
-            self.mk_args(song), path), 'w', BUF_LARGE)
+            self.args(song), path), 'w', BUF_LARGE)
 
 rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
 encoders = {'oggenc': OggEnc, 'lame': Lame}
