@@ -15,5 +15,5 @@ case "$ans" in
     q) exit 0;;
 esac
 
-peel < "$tmp" | funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE
+peel < "$tmp" | ${UNPEEL_PLAY:-funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE}
 rm -f "$tmp"
