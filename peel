@@ -15,56 +15,53 @@ BUF_LARGE = 1024 * 1024
 def quotemeta(s):
     for meta in ('\\', '$', '`', '"', '\n'):
         s = s.replace(meta, '\\' + meta)
-    return '"%s"' % s
+    return s
 
-def popen(argv, mode='r', bufsize=-1):
-    enc = sys.getfilesystemencoding()
-    command = ' '.join([quotemeta(a) for a in argv]).encode(enc)
-    return os.popen(command, mode, bufsize)
+def popen(cmd, mode='r', bufsize=-1):
+    return os.popen(cmd.encode(sys.getfilesystemencoding()), mode, bufsize)
 
 class Command:
     def __init__(self, user_opts):
-        self.user_opts = user_opts.split()
+        self.user_opts = user_opts
+    def mk_args(self, song):
+        args = []
+        for key, opt in self.opts.items():
+            try: args.append(opt(song[key]))
+            except KeyError: pass
+        return ' '.join(args)
 
 class CdParanoia(Command):
     def open(self, device, number):
-        return popen(['cdparanoia', '-r'] + self.user_opts + ['-d', device,
-            '%d' % number, '-'])
+        return popen('cdparanoia %s -r -d "%s" %d -' % (self.user_opts, device,
+            number))
 
 class Sox(Command):
     def open(self, device, number):
-        return popen(['sox', 'track%02d.cdda.wav' % song['number'], '-t',
-            'raw', '-r', '44100', '-c', '2', '-s', '-'])
+        return popen('sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -s -' %
+            (self.user_opts, number))
 
 class OggEnc(Command):
+    opts = {
+        'artist': lambda s: '-a "%s"' % quotemeta(s),
+        'title': lambda s: '-t "%s"' % quotemeta(s),
+        'album': lambda s: '-l "%s"' % quotemeta(s),
+        'number': lambda d: '-N "%d"' % d,
+        'mbid': lambda s: '-c "musicbrainz_trackid=%s"' % s,
+        }
     def open(self, song, path):
-        argv = ['oggenc', '-Q', '-r'] + self.user_opts
-        try: argv += ['-a', song['artist']]
-        except KeyError: pass
-        try: argv += ['-t', song['title']]
-        except KeyError: pass
-        try: argv += ['-l', song['album']]
-        except KeyError: pass
-        try: argv += ['-N', '%d' % song['number']]
-        except KeyError: pass
-        try: argv += ['-c', 'musicbrainz_trackid=%s' % song['mbid']]
-        except KeyError: pass
-        argv += ['-o', '%s.ogg' % path, '-']
-        return popen(argv, 'w')
+        return popen('oggenc -Q -r %s %s -o "%s.ogg" -' % (self.user_opts,
+            self.mk_args(song), path), 'w')
 
 class Lame(Command):
+    opts = {
+        'artist': lambda s: '--ta "%s"' % quotemeta(s),
+        'title': lambda s: '--tt "%s"' % quotemeta(s),
+        'album': lambda s: '--tl "%s"' % quotemeta(s),
+        'number': lambda d: '--tn "%d"' % d,
+        }
     def open(self, song, path):
-        argv = ['lame', '--quiet', '-rx'] + self.user_opts
-        try: argv += ['--ta', song['artist']]
-        except KeyError: pass
-        try: argv += ['--tt', song['title']]
-        except KeyError: pass
-        try: argv += ['--tl', song['album']]
-        except KeyError: pass
-        try: argv += ['--tn', '%d' % song['number']] # XXX
-        except KeyError: pass
-        argv += ['-', '%s.mp3' % path]
-        return popen(argv, 'w')
+        return popen('lame --quiet -rx %s %s - "%s.mp3"' % (self.user_opts,
+            self.mk_args(song), path), 'w')
 
 rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
 encoders = {'oggenc': OggEnc, 'lame': Lame}
