@@ -50,7 +50,7 @@ class OggEnc(Command):
         }
     def open(self, song, path):
         return popen('oggenc -Q -r %s %s -o "%s.ogg" -' % (self.user_opts,
-            self.mk_args(song), path), 'w')
+            self.mk_args(song), path), 'w', BUF_LARGE)
 
 class Lame(Command):
     opts = {
@@ -61,7 +61,7 @@ class Lame(Command):
         }
     def open(self, song, path):
         return popen('lame --quiet -rx %s %s - "%s.mp3"' % (self.user_opts,
-            self.mk_args(song), path), 'w')
+            self.mk_args(song), path), 'w', BUF_LARGE)
 
 rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
 encoders = {'oggenc': OggEnc, 'lame': Lame}
