@@ -9,14 +9,15 @@ until mbget -s; do
     esac
 done
 
-tmp=$(mktemp -t peel.XXXXXXXXXX)
-mbget >"$tmp"
-
 echo -n "Is this data OK? (yes/edit/quit) "; read ans
 case "$ans" in
-    e|edit) ${EDITOR:-vi} "$tmp";;
+    e|edit) need_edit=1;;
     q|quit) exit 0;;
 esac
+
+tmp="$(mktemp -t peel.XXXXXXXXXX)"
+mbget >"$tmp"
+if [ "$need_edit" ]; then ${EDITOR:-vi} "$tmp"; fi
 
 peel <"$tmp" | ${UNPEEL_PLAY:-funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE}
 rm -f "$tmp"
