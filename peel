@@ -31,11 +31,6 @@ class CdParanoia(Command):
         return popen(['cdparanoia', '-r'] + self.user_opts + ['-d', device,
             '%d' % number, '-'])
 
-class APlay(Command):
-    def open(self):
-        return popen(['funnel', 'aplay', '-q', '-t', 'raw', '-c', '2', '-r',
-            '44100', '-f', 'S16_LE'] + self.user_opts, 'w', BUF_LARGE)
-
 class OggEnc(Command):
     def open(self, song, path):
         argv = ['oggenc', '-Q', '-r'] + self.user_opts
@@ -71,7 +66,6 @@ def sox_open(path):
         '-'])
 
 rippers = {'cdparanoia': CdParanoia}
-players = {'aplay': APlay}
 encoders = {'oggenc': OggEnc, 'lame': Lame}
 
 def_path = '%(artist)s/%(album)s/%(number)02d - %(title)s'
@@ -93,11 +87,9 @@ if __name__ == '__main__':
     cp.read([os.path.expanduser('~/.peelrc')])
 
     rip_cmd = cp.get('commands', 'rip', 'cdparanoia')
-    play_cmd = cp.get('commands', 'play', 'aplay')
     enc_cmd = cp.get('commands', 'encode', 'oggenc')
 
     rip_opts = cp.get('options', rip_cmd, '')
-    play_opts = cp.get('options', play_cmd, '')
     enc_opts = cp.get('options', enc_cmd, '')
 
     path_tmpl = cp.get('output', 'path', def_path)
@@ -114,18 +106,16 @@ if __name__ == '__main__':
 
     try:
         ripper = rippers[rip_cmd](rip_opts)
-        player = players[play_cmd](play_opts)
         encoder = encoders[enc_cmd](enc_opts)
     except KeyError, e:
         print >>sys.stderr, 'unknown command: %s' % e.args[0]
 
     if not quiet:
-        play = player.open()
         cli = lastfm.client.Client('peel')
         cli.open_log()
 
     for song in lastfm.marshaller.load_documents(sys.stdin):
-        print "Track %(number)s: %(title)s..." % song
+        print >>sys.stderr, "Track %(number)s: %(title)s..." % song
 
         safe_song = {}
         for k, v in song.iteritems():
@@ -151,7 +141,7 @@ if __name__ == '__main__':
             if buf:
                 enc.write(buf)
                 if not quiet:
-                    play.write(buf)
+                    sys.stdout.write(buf)
             else:
                 rip.close()
 

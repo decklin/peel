@@ -1,0 +1,19 @@
+#!/bin/sh
+
+tmp=$(mktemp -t peel.XXXXXXXXXX)
+until mbget >"$tmp"; do
+    echo "Could not find disc. Trying to submit to MusicBrainz..."
+    mbsubmit
+done
+
+${PAGER:-more} "$tmp"
+echo -n "Is this data OK? (yes/edit/quit) "
+read ans
+
+case "$ans" in
+    e) ${EDITOR:-vi} "$tmp";;
+    q) exit 0;;
+esac
+
+peel < "$tmp" | funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE
+rm -f "$tmp"
