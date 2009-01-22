@@ -39,7 +39,7 @@ class CdParanoia(Command):
 class Sox(Command):
     def open(self, device, number):
         return popen('sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -s -' %
-            (self.args(), number))
+            (number, self.args()))
 
 class OggEnc(Command):
     song_opts = {
