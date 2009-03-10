@@ -10,7 +10,7 @@ Querying
 
 mbget will read the CD in your computer's CD-ROM drive, query
 MusicBrainz for its album information, and output it in YAML. This
-format is like the one lastfmsubmitd uses, but it does not contain the
+format is like the one lastfmsubmitd uses, but it does not contain a
 time of submission. Instead of reading from the CD-ROM drive, you can
 also specify an album with --discid or --albumid. If a list of track
 numbers is also specified, only those tracks will be printed.
@@ -24,9 +24,64 @@ Ripping CDs
 ===========
 
 peel, the CD ripper, reads a description of tracks to rip from standard
-input. So, here's the trivial case of ripping a CD:
+input, invokes cdparanoia to read from the CD, then sends the audio to
+standard output, while also writing out encoded files (sort of like the
+unix "tee" command). Thus, here's the trivial case of ripping a CD:
 
-    $ mbget | peel
+    $ mbget | peel | funnel | play -q -t raw -c 2 -r 44100 -s -b 16 -
+
+The "funnel" command (included in this package) serves to buffer data so
+that the audio does not drop out if cdparanoia stalls. "play" is part of
+sox.
+
+As this is a lot of typing, there is an interactive wrapper shell
+script, unpeel, that will run mbget, give you the opportunity to correct
+or enter the data for your CD, then run the rest of the pipeline for
+you. You can change the command used to play audio with the environment
+variable UNPEEL_PLAY. On Linux systems, "aplay -q -t raw -c 2 -r 44100
+-f S16_LE" may be handy.
+
+peel can also rip and encode without outputting any audio, by specifying
+the -q option; this will generally be CPU-bound, as the encoder no
+longer has to wait for the sound card. If you have sox installed, it can
+also rip from already-extracted WAV files, as produced by cdparanoia -B,
+with the -c option; here, extraction will be IO-bound, so you can remove
+the CD as quickly as possible. You can of course start peel -c while
+cdparanoia -B is running, but I would recommend against using -q in this
+case.
+
+There are currently two encoders defined, oggenc and lame, and one
+ripper, cdparanoia. You can set which one to use and their options in
+~/.peelrc, which is a standard Python-style configuration file:
+
+    [commands]
+    rip = cdparanoia
+    encode = oggenc
+
+    [options]
+    cdparanoia = -X
+    oggenc = -q 5
+    lame = --preset standard
+
+(I do not endorse the use of lame or any other MP3 encoder, but I'm not
+about to prevent you from using it.) I would love definitions for other
+rippers or encoders out there.
+
+The paths for encoded files are generated with Python-style string
+interpolation:
+
+    [output]
+    path = %(artist)s/%(album)s/%(number)02d. %(artist)s - %(title)s
+
+The keys available depend only on the input given to peel. I may or may
+not consider using something like empy here.
+
+N.b.: funnel can be replaced with bfr, a general-purpose pipe-buffering
+program with extensive options for tuning the buffer size and other
+parameters. It includes a "bfp" command which can take the place of both
+funnel and play (including all the audio format options, as it defaults
+to CD audio settings) in the pipeline, although it is limited to OSS
+output.
 
 Replaying tracks from a CD
 ==========================
