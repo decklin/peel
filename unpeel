@@ -6,13 +6,13 @@ DEFAULT_PLAY='play -q -t raw -c 2 -r 44100 -s -L -2 -'
 until mbget -s; do
     echo "Could not find disc. Trying to submit to MusicBrainz..."
     mbsubmit
-    echo "Did that work? (yes/no) "; read ans
+    echo -n "Did that work? (Yes/no) "; read ans
     case "$ans" in
         n|no) exit 1;;
     esac
 done
 
-echo -n "Is this data OK? (yes/edit/quit) "; read ans
+echo -n "Is this data OK? (Yes/edit/quit) "; read ans
 case "$ans" in
     e|edit) need_edit=1;;
     q|quit) exit 0;;
@@ -20,7 +20,7 @@ esac
 
 tmp="$(mktemp -t peel.XXXXXXXXXX)"
 mbget >"$tmp"
-if [ "$need_edit" ]; then ${EDITOR:-vi} "$tmp"; fi
+test "$need_edit" && ${EDITOR:-vi} "$tmp"
 
 peel "$@" <"$tmp" | funnel "${UNPEEL_PLAY:-$DEFAULT_PLAY}"
 rm -f "$tmp"
