@@ -1,6 +1,7 @@
 #!/bin/sh
 
-DEFAULT_PLAY='funnel aplay -q -t raw -c 2 -r 44100 -f S16_LE'
+# for alsa, 'aplay -q -t raw -c 2 -r 44100 -f S16_LE'
+DEFAULT_PLAY='play -q -t raw -c 2 -r 44100 -s -L -2 -'
 
 until mbget -s; do
     echo "Could not find disc. Trying to submit to MusicBrainz..."
