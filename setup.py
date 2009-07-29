@@ -24,6 +24,8 @@ setup(
         'mbget',
         'mbsubmit',
         'peel',
+        'peel-encode',
+        'peel-buffer',
         ],
     data_files=[
         ('share/man/man1', [

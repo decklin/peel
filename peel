@@ -1,147 +1,26 @@
-#!/usr/bin/python
+#!/bin/sh
 
-import os
-import sys
-import time
-import getopt
+# for alsa, 'aplay -q -t raw -c 2 -r 44100 -f S16_LE'
+DEFAULT_PLAY='play -q -t raw -c 2 -r 44100 -s -L -2 -'
 
-import lastfm.client
-import lastfm.marshaller
-from lastfm.config import SaneConfParser
+until mbget -s; do
+    echo "Could not find disc. Trying to submit to MusicBrainz..."
+    mbsubmit
+    echo -n "Did that work? (Yes/no) "; read ans
+    case "$ans" in
+        n|no) exit 1;;
+    esac
+done
 
-BUF_SMALL = 4096
-BUF_LARGE = 1024 * 1024
+echo -n "Is this data OK? (Yes/edit/quit) "; read ans
+case "$ans" in
+    e|edit) need_edit=1;;
+    q|quit) exit 0;;
+esac
 
-def quotemeta(s):
-    for meta in ('\\', '$', '`', '"', '\n'):
-        s = s.replace(meta, '\\' + meta)
-    return s
+tmp="$(mktemp -t peel.XXXXXXXXXX)"
+mbget >"$tmp"
+test "$need_edit" && ${EDITOR:-vi} "$tmp"
 
-def popen(cmd, mode='r', bufsize=-1):
-    return os.popen(cmd.encode(sys.getfilesystemencoding()), mode, bufsize)
-
-class Command:
-    song_opts = {}
-    def __init__(self, user_opts):
-        self.user_opts = user_opts
-    def args(self, song=None):
-        args = [self.user_opts]
-        for key, opt in self.song_opts.items():
-            try: args.append(opt(song[key]))
-            except KeyError: pass
-        return ' '.join(args)
-
-class CdParanoia(Command):
-    def open(self, device, number):
-        return popen('cdparanoia %s -r -d "%s" %d -' % (self.args(), device,
-            number))
-
-class Sox(Command):
-    def open(self, device, number):
-        return popen('sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -s -' %
-            (number, self.args()))
-
-class OggEnc(Command):
-    song_opts = {
-        'artist': lambda s: '-a "%s"' % quotemeta(s),
-        'title': lambda s: '-t "%s"' % quotemeta(s),
-        'album': lambda s: '-l "%s"' % quotemeta(s),
-        'number': lambda d: '-N "%d"' % d,
-        'mbid': lambda s: '-c "musicbrainz_trackid=%s"' % s,
-        }
-    def open(self, song, path):
-        return popen('oggenc -Q -r %s %s -o "%s.ogg" -' % (self.user_opts,
-            self.args(song), path), 'w', BUF_LARGE)
-
-class Lame(Command):
-    song_opts = {
-        'artist': lambda s: '--ta "%s"' % quotemeta(s),
-        'title': lambda s: '--tt "%s"' % quotemeta(s),
-        'album': lambda s: '--tl "%s"' % quotemeta(s),
-        'number': lambda d: '--tn "%d"' % d,
-        }
-    def open(self, song, path):
-        return popen('lame --quiet -rx %s %s - "%s.mp3"' % (self.user_opts,
-            self.args(song), path), 'w', BUF_LARGE)
-
-rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
-encoders = {'oggenc': OggEnc, 'lame': Lame}
-
-def_path = '%(artist)s/%(album)s/%(number)02d - %(title)s'
-
-if __name__ == '__main__':
-    shortopts = 'd:e:qc'
-    longopts = ['device=', 'encoder', 'quiet', 'continue']
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
-    except getopt.GetoptError, e:
-        print >>sys.stderr, 'peel: %s' % e
-        sys.exit(1)
-
-    device = '/dev/cdrom'
-    quiet = False
-
-    cp = SaneConfParser()
-    cp.read([os.path.expanduser('~/.peelrc')])
-
-    rip_cmd = cp.get('commands', 'rip', 'cdparanoia')
-    enc_cmd = cp.get('commands', 'encode', 'oggenc')
-
-    rip_opts = cp.get('options', rip_cmd, '')
-    enc_opts = cp.get('options', enc_cmd, '')
-
-    path_tmpl = cp.get('output', 'path', def_path)
-
-    for opt, arg in opts:
-        if opt in ('--device', '-d'):
-            device = arg
-        elif opt in ('--quiet', '-q'):
-            quiet = True
-        elif opt in ('--continue', '-c'):
-            rip_cmd = 'sox'
-        elif opt in ('--encoder', '-e'):
-            enc_cmd = arg
-
-    try:
-        ripper = rippers[rip_cmd](rip_opts)
-        encoder = encoders[enc_cmd](enc_opts)
-    except KeyError, e:
-        print >>sys.stderr, 'unknown command: %s' % e.args[0]
-
-    if not quiet:
-        cli = lastfm.client.Client('peel')
-        cli.open_log()
-
-    for song in lastfm.marshaller.load_documents(sys.stdin):
-        print >>sys.stderr, "Track %(number)s: %(title)s..." % song
-
-        safe_song = {}
-        for k, v in song.iteritems():
-            try:
-                safe_song[k] = v.replace('/', '_')
-            except AttributeError:
-                safe_song[k] = v
-
-        path = path_tmpl % safe_song
-        dir = os.path.dirname(path)
-        if dir and not os.path.isdir(dir):
-            os.makedirs(dir)
-
-        enc = encoder.open(song, path)
-        rip = ripper.open(device, song['number'])
-
-        while not rip.closed:
-            buf = rip.read(BUF_SMALL)
-            if buf:
-                enc.write(buf)
-                if not quiet:
-                    sys.stdout.write(buf)
-            else:
-                rip.close()
-
-        if not quiet:
-            if song['length'] >= 30:
-                song['time'] = time.gmtime()
-                cli.submit(song)
-                cli.log.info('Sent %s to daemon' % lastfm.repr(song))
+peel-encode "$@" <"$tmp" | peel-buffer "${PEEL_PLAY:-$DEFAULT_PLAY}"
+rm -f "$tmp"

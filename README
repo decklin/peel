@@ -23,23 +23,32 @@ does not really work and cannot be used in combination with --album.)
 Ripping CDs
 ===========
 
-peel, the CD ripper, reads a description of tracks to rip from standard
-input, invokes cdparanoia to read from the CD, then sends the audio to
-standard output, while also writing out encoded files (sort of like the
-unix "tee" command). Thus, here's the trivial case of ripping a CD:
+peel, the CD ripper, invokes several programs in a pipeline:
 
-    $ mbget | peel | funnel | play -q -t raw -c 2 -r 44100 -s -b 16 -
+  * mbget, as discussed above, outputs the track listing of the CD.
 
-The "funnel" command (included in this package) serves to buffer data so
-that the audio does not drop out if cdparanoia stalls. "play" is part of
-sox.
+  * peel-encode reads a description of tracks to rip from standard
+    input, invokes cdparanoia to read from the CD, then sends the audio to
+    standard output, while also writing out encoded files (sort of like the
+    unix "tee" command).
 
-As this is a lot of typing, there is an interactive wrapper shell
-script, unpeel, that will run mbget, give you the opportunity to correct
-or enter the data for your CD, then run the rest of the pipeline for
-you. You can change the command used to play audio with the environment
-variable UNPEEL_PLAY. On Linux systems, "aplay -q -t raw -c 2 -r 44100
--f S16_LE" may be handy.
+  * peel-buffer runs an audio-playing command, specified as the only
+    command-line argument, with a large buffer in front of its standard
+    input.
+
+Conceptually, it looks like this:
+
+    $ mbget | peel-encode | peel-buffer "play -t raw ..."
+
+Which works (try it!), but using the high-level "peel" command allows
+you to edit (and submit first, if necessary) the MusicBrainz data before
+feeding it to peel-encode, knows the correct options for play or aplay,
+and saves quite a bit of typing. Arguments given to peel will be passed
+on to peel-encode. (TODO: passing arguments to mbget would also be
+nice.)
+
+Options
+=======
 
 peel can also rip and encode without outputting any audio, by specifying
 the -q option; this will generally be CPU-bound, as the encoder no
@@ -47,8 +56,7 @@ longer has to wait for the sound card. If you have sox installed, it can
 also rip from already-extracted WAV files, as produced by cdparanoia -B,
 with the -c option; here, extraction will be IO-bound, so you can remove
 the CD as quickly as possible. You can of course start peel -c while
-cdparanoia -B is running, but I would recommend against using -q in this
-case.
+cdparanoia -B is running, but be careful that your CPU is not too fast.
 
 There are currently two encoders defined, oggenc and lame, and one
 ripper, cdparanoia. You can set which one to use and their options in
@@ -74,14 +82,7 @@ interpolation:
     path = %(artist)s/%(album)s/%(number)02d. %(artist)s - %(title)s
 
 The keys available depend only on the input given to peel. I may or may
-not consider using something like empy here.
-
-N.b.: funnel can be replaced with bfr, a general-purpose pipe-buffering
-program with extensive options for tuning the buffer size and other
-parameters. It includes a "bfp" command which can take the place of both
-funnel and play (including all the audio format options, as it defaults
-to CD audio settings) in the pipeline, although it is limited to OSS
-output.
+not consider using something like empy here. (TODO: albumartist tag.)
 
 Replaying tracks from a CD
 ==========================
@@ -99,7 +100,7 @@ Requirements
 Author and License
 ==================
 
-Copyright © 2006-2008 Decklin Foster <decklin@red-bean.com>.
+Copyright © 2006-2009 Decklin Foster <decklin@red-bean.com>.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
