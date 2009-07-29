@@ -47,7 +47,6 @@ def buffer(in_fd, out_fd):
 
 if __name__ == '__main__':
     try:
-        cmd = ' '.join(sys.argv[1:])
-        buffer(sys.stdin, os.popen(cmd, 'w'))
+        buffer(sys.stdin, os.popen(sys.argv[1], 'w'))
     except KeyboardInterrupt:
         pass
