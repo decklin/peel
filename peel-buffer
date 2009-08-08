@@ -10,38 +10,39 @@ BUF_CHUNK = 4096
 BUF_MAX = 1024
 BUF_INIT = 128
 
-def buffer(in_fd, out_fd):
-    """Reads from something bursty (such as the CD drive) on in_fd and
-    writes to something slow (such as the sound card) on out_fd,
-    ideally at a constant rate. The internal buffer is a list of small
-    chunks; inbetween each chunk written we check for more on the
-    input fd, which we put in nonblocking mode."""
+def buffer(in_fp, out_fp):
+    """Reads from something bursty (i.e. peel-encode, which gets its
+    data from cdparanoia) on in_fp and writes to something slow (i.e.
+    play, which writes to the sound card) on out_fp, ideally at a
+    constant rate. The internal buffer is a list of small chunks;
+    inbetween each chunk written we check for more on in_fp, which we
+    put in nonblocking mode."""
 
     # initial read in blocking mode
-    buf = [in_fd.read(BUF_CHUNK) for i in range(0, BUF_INIT)]
+    buf = [in_fp.read(BUF_CHUNK) for i in range(0, BUF_INIT)]
 
-    flags = fcntl.fcntl(in_fd, fcntl.F_GETFL)
-    fcntl.fcntl(in_fd, fcntl.F_SETFL, flags|os.O_NONBLOCK)
+    flags = fcntl.fcntl(in_fp, fcntl.F_GETFL)
+    fcntl.fcntl(in_fp, fcntl.F_SETFL, flags|os.O_NONBLOCK)
 
-    # as long as there's something to write or read
-    while buf or not in_fd.closed:
-        # only write one chunk each time through the loop
+    # as long as there's something to read or still in the buffer
+    while not in_fp.closed or buf:
+        # just write one chunk each time through the loop
         if buf:
-            out_fd.write(buf.pop(0))
+            out_fp.write(buf.pop(0))
         # read if we can and we're not full
-        while not in_fd.closed and len(buf) < BUF_MAX:
+        while not in_fp.closed and len(buf) < BUF_MAX:
             # but don't block if we have data to push out
             if buf:
                 timeout = 0
             else:
                 timeout = None
-            rd, wr, ex = select.select([in_fd], [], [], timeout)
-            if in_fd in rd:
-                raw = in_fd.read(BUF_CHUNK)
+            rd, wr, ex = select.select([in_fp], [], [], timeout)
+            if in_fp in rd:
+                raw = in_fp.read(BUF_CHUNK)
                 if len(raw) > 0:
                     buf.append(raw)
                 else:
-                    in_fd.close()
+                    in_fp.close()
             else:
                 break
 
