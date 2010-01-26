@@ -6,11 +6,11 @@ import select
 import fcntl
 
 # These may need some tuning
-BUF_CHUNK = 4096
-BUF_MAX = 1024
-BUF_INIT = 128
+CHUNK = 4 * 1024
+MIN = 256
+MAX = 1024
 
-def buffer(in_fp, out_fp):
+def pipe_buffer(in_fp, out_fp):
     """Reads from something bursty (i.e. peel-encode, which gets its
     data from cdparanoia) on in_fp and writes to something slow (i.e.
     play, which writes to the sound card) on out_fp, ideally at a
@@ -18,36 +18,35 @@ def buffer(in_fp, out_fp):
     inbetween each chunk written we check for more on in_fp, which we
     put in nonblocking mode."""
 
-    # initial read in blocking mode
-    buf = [in_fp.read(BUF_CHUNK) for i in range(0, BUF_INIT)]
-
     flags = fcntl.fcntl(in_fp, fcntl.F_GETFL)
     fcntl.fcntl(in_fp, fcntl.F_SETFL, flags|os.O_NONBLOCK)
 
-    # as long as there's something to read or still in the buffer
-    while not in_fp.closed or buf:
-        # just write one chunk each time through the loop
-        if buf:
-            out_fp.write(buf.pop(0))
-        # read if we can and we're not full
-        while not in_fp.closed and len(buf) < BUF_MAX:
-            # but don't block if we have data to push out
+    buf = []
+    ready = False
+
+    while not in_fp.closed:
+        rd, wr, ex = select.select(
+            [in_fp] if len(buf) < MAX else [],
+            [out_fp] if ready else [],
+            [])
+        if in_fp in rd:
+            data = in_fp.read(CHUNK)
+            if data:
+                buf.append(data)
+                if len(buf) > MIN:
+                    ready = True
+            else:
+                in_fp.close()
+        if out_fp in wr:
             if buf:
-                timeout = 0
+                out_fp.write(buf.pop(0))
             else:
-                timeout = None
-            rd, wr, ex = select.select([in_fp], [], [], timeout)
-            if in_fp in rd:
-                raw = in_fp.read(BUF_CHUNK)
-                if len(raw) > 0:
-                    buf.append(raw)
-                else:
-                    in_fp.close()
-            else:
-                break
+                ready = False
+
+    out_fp.write(''.join(buf))
 
 if __name__ == '__main__':
     try:
-        buffer(sys.stdin, os.popen(sys.argv[1], 'w'))
+        pipe_buffer(sys.stdin, os.popen(sys.argv[1], 'w'))
     except KeyboardInterrupt:
         pass
