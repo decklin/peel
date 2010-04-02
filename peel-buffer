@@ -9,6 +9,7 @@ import fcntl
 CHUNK = 4 * 1024
 MIN = 256
 MAX = 1024
+TIMEOUT = CHUNK / float(44100 * 2)
 
 def pipe_buffer(in_fp, out_fp):
     """Reads from something bursty (i.e. peel-encode, which gets its
@@ -25,10 +26,8 @@ def pipe_buffer(in_fp, out_fp):
     ready = False
 
     while not in_fp.closed:
-        rd, wr, ex = select.select(
-            [in_fp] if len(buf) < MAX else [],
-            [out_fp] if ready else [],
-            [])
+        rd, wr, ex = select.select([in_fp] if len(buf) < MAX else [],
+                                   [out_fp] if ready else [], [], TIMEOUT)
         if in_fp in rd:
             data = in_fp.read(CHUNK)
             if data:
