@@ -13,7 +13,7 @@ BUF_SMALL = 4096
 BUF_LARGE = 1024 * 1024
 
 def quotemeta(s):
-    for meta in ('\\', '$', '`', '"', '\n'):
+    for meta in ('\\', '$', '`', '"'):
         s = s.replace(meta, '\\' + meta)
     return s
 
@@ -51,7 +51,7 @@ class OggEnc(Command):
         }
     def open(self, song, path):
         return popen('oggenc -Q -r %s %s -o "%s.ogg" -' % (self.user_opts,
-            self.args(song), path), 'w', BUF_LARGE)
+            self.args(song), quotemeta(path)), 'w', BUF_LARGE)
 
 class Lame(Command):
     song_opts = {
@@ -62,7 +62,7 @@ class Lame(Command):
         }
     def open(self, song, path):
         return popen('lame --quiet -rx %s %s - "%s.mp3"' % (self.user_opts,
-            self.args(song), path), 'w', BUF_LARGE)
+            self.args(song), quotemeta(path)), 'w', BUF_LARGE)
 
 rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
 encoders = {'oggenc': OggEnc, 'lame': Lame}
