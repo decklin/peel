@@ -28,5 +28,5 @@ tmp="$(mktemp -t peel.XXXXXXXXXX)"
 mbget >"$tmp"
 test "$need_edit" && ${EDITOR:-vi} "$tmp"
 
-peel-encode "$@" <"$tmp" | peel-buffer "${PEEL_PLAY:-$DEFAULT_PLAY}"
+peel-encode "$@" <"$tmp" | peel-buffer | ${PEEL_PLAY:-$DEFAULT_PLAY}
 rm -f "$tmp"

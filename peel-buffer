@@ -46,6 +46,6 @@ def pipe_buffer(in_fp, out_fp):
 
 if __name__ == '__main__':
     try:
-        pipe_buffer(sys.stdin, os.popen(sys.argv[1], 'w'))
+        pipe_buffer(sys.stdin, sys.stdout)
     except KeyboardInterrupt:
         pass
