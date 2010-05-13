@@ -1,7 +1,10 @@
 #!/bin/sh
 
-# for alsa, 'aplay -q -t raw -c 2 -r 44100 -f S16_LE'
-DEFAULT_PLAY='play -q -t raw -c 2 -r 44100 -s -L -2 -'
+if command -v aplay >/dev/null 2>&1; then
+    DEFAULT_PLAY='aplay -q -t raw -c 2 -r 44100 -f S16_LE'
+else
+    DEFAULT_PLAY='play -q -t raw -c 2 -r 44100 -s -L -2 -'
+fi
 
 if [ ! -t 0 ]; then
     echo "peel is now a wrapper script, and will set up a peel-encode"
