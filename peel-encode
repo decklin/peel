@@ -41,6 +41,19 @@ class Sox(Command):
         return popen('sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -s -' %
             (number, self.args()))
 
+class Flac(Command):
+    song_opts = {
+        'artist': lambda s: '-T "ARTIST=%s"' % quotemeta(s),
+        'title': lambda s: '-T "TITLE=%s"' % quotemeta(s),
+        'album': lambda s: '-T "ALBUM=%s"' % quotemeta(s),
+        'number': lambda d: '-T "TRACKNUMBER=%d"' % d,
+        'mbid': lambda s: '-T "musicbrainz_trackid=%s"' % s,
+        }
+    def open(self, song, path):
+        return popen('flac --silent --endian=little --channels=2 --bps=16 ' +
+            '--sample-rate=44100 --sign=signed %s %s -o "%s.flac" -' %
+            (self.user_opts, self.args(song), quotemeta(path)), 'w', BUF_LARGE)
+
 class OggEnc(Command):
     song_opts = {
         'artist': lambda s: '-a "%s"' % quotemeta(s),
@@ -65,7 +78,7 @@ class Lame(Command):
             self.args(song), quotemeta(path)), 'w', BUF_LARGE)
 
 rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
-encoders = {'oggenc': OggEnc, 'lame': Lame}
+encoders = {'flac': Flac, 'oggenc': OggEnc, 'lame': Lame}
 
 def_path = '%(artist)s/%(album)s/%(number)02d - %(title)s'
 
