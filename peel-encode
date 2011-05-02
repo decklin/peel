@@ -110,9 +110,6 @@ if __name__ == '__main__':
     rip_cmd = cp.get('commands', 'rip', 'cdparanoia')
     enc_cmd = cp.get('commands', 'encode', 'flac')
 
-    rip_opts = cp.get('options', rip_cmd, '')
-    enc_opts = cp.get('options', enc_cmd, '')
-
     path_tmpl = cp.get('output', 'path', def_path)
 
     for opt, arg in opts:
@@ -124,6 +121,9 @@ if __name__ == '__main__':
             rip_cmd = 'sox'
         elif opt in ('--encoder', '-e'):
             enc_cmd = arg
+
+    rip_opts = cp.get('options', rip_cmd, '')
+    enc_opts = cp.get('options', enc_cmd, '')
 
     try:
         ripper = rippers[rip_cmd](rip_opts)
