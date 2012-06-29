@@ -4,8 +4,6 @@ import sys
 import os
 import time
 import getopt
-
-import lastfm
 import lastfm.client
 import lastfm.marshaller
 
@@ -59,10 +57,9 @@ if __name__ == '__main__':
     for s in songs:
         l = s['length']
         if l:
-            if l >= lastfm.MIN_LEN and l <= lastfm.MAX_LEN:
-                date = pos + l / 2
-                s['time'] = time.gmtime(pos)
-                subs.append(s)
+            date = pos + l / 2
+            s['time'] = time.gmtime(pos)
+            subs.append(s)
             pos = pos + l
         else:
             print >>sys.stderr, 'lastcd: track has zero length'
