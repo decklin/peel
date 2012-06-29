@@ -3,21 +3,22 @@
 import sys
 import os
 import webbrowser
-try:
-    import musicbrainz
-except ImportError, e:
-    print >>sys.stderr, 'import: %s' % e
-    sys.exit(1)
+import musicbrainz2.disc
+import musicbrainz2.webservice
 
 if __name__ == '__main__':
-    mb = musicbrainz.mb()
+    disc = musicbrainz2.disc.readDisc()
+    query = musicbrainz2.webservice.Query()
 
-    mb.Query(musicbrainz.MBQ_GetCDTOC)
-    cdid = mb.GetResultData(musicbrainz.MBE_TOCGetCDIndexId)
-    mb.QueryWithArgs(musicbrainz.MBQ_GetCDInfoFromCDIndexId, [cdid])
+    try:
+        filter = musicbrainz2.webservice.ReleaseFilter(discId=disc.getId())
+        results = query.getReleases(filter)
+    except musicbrainz2.webservice.WebServiceError, e:
+        print "Error:", e
+        sys.exit(1)
 
-    if mb.GetResultInt(musicbrainz.MBE_GetNumAlbums) == 0:
-        url = mb.GetWebSubmitURL()
+    if len(results) == 0:
+        url = musicbrainz2.disc.getSubmissionUrl(disc)
         if url:
             webbrowser.open_new(url)
         else:
