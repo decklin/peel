@@ -4,8 +4,8 @@ import sys
 import os
 import time
 import getopt
+import yaml
 import lastfm.client
-import lastfm.marshaller
 
 USAGE = """\
 usage: lastcd [--stdout] [--debug] [--help]"""
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     songs = []
     for f in [file(name) for name in args] or [sys.stdin]:
-        songs += lastfm.marshaller.load_documents(f)
+        songs += yaml.load_all(f)
 
     total_len = 0
     for s in songs:
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if stdout:
-        lastfm.marshaller.dump_documents(subs, sys.stdout)
+        print yaml.dump(subs, explicit_start=True, default_flow_style=False)
     else:
         try:
             cli.log.info('Sending %s song(s) to daemon' % len(subs))

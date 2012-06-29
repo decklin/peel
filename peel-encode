@@ -4,10 +4,15 @@ import os
 import sys
 import time
 import getopt
+import yaml
+import ConfigParser
 
-import lastfm.client
-import lastfm.marshaller
-from lastfm.config import SaneConfParser
+class SaneConfParser(ConfigParser.RawConfigParser):
+    def get(self, section, option, default):
+        try:
+            return ConfigParser.RawConfigParser.get(self, section, option)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            return default
 
 BUF_SMALL = 4096
 BUF_LARGE = 1024 * 1024
@@ -127,10 +132,14 @@ if __name__ == '__main__':
         print >>sys.stderr, 'unknown command: %s' % e.args[0]
 
     if not quiet:
-        cli = lastfm.client.Client('peel')
-        cli.open_log()
+        try:
+            import lastfm.client
+            cli = lastfm.client.Client('peel')
+            cli.open_log()
+        except:
+            print >>sys.stderr, 'lastfm missing?'
 
-    for song in lastfm.marshaller.load_documents(sys.stdin):
+    for song in yaml.load_all(sys.stdin):
         print >>sys.stderr, "Track %(number)s: %(title)s..." % song
 
         safe_song = {}
