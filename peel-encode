@@ -33,13 +33,14 @@ class Command:
 
 class CdParanoia(Command):
     def open(self, device, number):
-        return popen('cdparanoia %s -r -d "%s" %d -' % (self.args(), device,
-            number))
+        cmd = 'cdparanoia %s -r -d "%s" %d -' % (self.args(), device, number)
+        return popen(cmd)
 
 class Sox(Command):
     def open(self, device, number):
-        return popen('sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -s -' %
-            (number, self.args()))
+        cmd = 'sox "track%02d.cdda.wav" %s -t raw -r 44100 -c 2 -e signed-integer -' % (
+            number, self.args())
+        return popen(cmd)
 
 class Flac(Command):
     song_opts = {
@@ -50,9 +51,10 @@ class Flac(Command):
         'mbid': lambda s: '-T "musicbrainz_trackid=%s"' % s,
         }
     def open(self, song, path):
-        return popen('flac --silent --endian=little --channels=2 --bps=16 ' +
-            '--sample-rate=44100 --sign=signed %s %s -o "%s.flac" -' %
-            (self.user_opts, self.args(song), quotemeta(path)), 'w', BUF_LARGE)
+        cmd = 'flac --silent --endian=little --channels=2 --bps=16 ' + \
+            '--sample-rate=44100 --sign=signed %s -o "%s.flac" -' % (
+            self.args(song), quotemeta(path))
+        return popen(cmd, 'w', BUF_LARGE)
 
 class OggEnc(Command):
     song_opts = {
@@ -63,8 +65,9 @@ class OggEnc(Command):
         'mbid': lambda s: '-c "musicbrainz_trackid=%s"' % s,
         }
     def open(self, song, path):
-        return popen('oggenc -Q -r %s %s -o "%s.ogg" -' % (self.user_opts,
-            self.args(song), quotemeta(path)), 'w', BUF_LARGE)
+        cmd = 'oggenc -Q -r %s -o "%s.ogg" -' % (
+            self.args(song), quotemeta(path))
+        return popen(cmd, 'w', BUF_LARGE)
 
 class Lame(Command):
     song_opts = {
@@ -74,8 +77,9 @@ class Lame(Command):
         'number': lambda d: '--tn "%d"' % d,
         }
     def open(self, song, path):
-        return popen('lame --quiet -rx %s %s - "%s.mp3"' % (self.user_opts,
-            self.args(song), quotemeta(path)), 'w', BUF_LARGE)
+        cmd = 'lame --quiet -rx %s - "%s.mp3"' % (
+            self.args(song), quotemeta(path))
+        return popen(cmd, 'w', BUF_LARGE)
 
 rippers = {'cdparanoia': CdParanoia, 'sox': Sox}
 encoders = {'flac': Flac, 'oggenc': OggEnc, 'lame': Lame}
