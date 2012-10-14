@@ -118,8 +118,8 @@ if __name__ == '__main__':
     query = musicbrainz2.webservice.Query()
     try:
         if albumid:
-            inc = musicbrainz2.webservice.ReleaseIncludes(artist=True, title=True, releaseEvents=True, labels=True, discs=True, tracks=True, releaseGroup=True)
-            release = q.getReleaseById(albumid, inc)
+            inc = musicbrainz2.webservice.ReleaseIncludes(artist=True, releaseEvents=True, labels=True, discs=True, tracks=True, releaseGroup=True)
+            release = query.getReleaseById(albumid, inc)
         else:
             filter = musicbrainz2.webservice.ReleaseFilter(discId=discid)
             results = query.getReleases(filter)
