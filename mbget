@@ -56,11 +56,11 @@ def trackinfo(track, n):
     else:
         artist_name = release.artist.name
     return { 'number': n,
-             'artist': artist_name.encode('utf-8'),
-             'album': release.title.encode('utf-8'),
-             'title': track.title.encode('utf-8'),
+             'artist': artist_name,
+             'album': release.title,
+             'title': track.title,
              'length': track.duration / 1000,
-             'mbid': track.id.split('/')[-1] }
+             'mbid': track.id.split('/')[-1].encode('ascii') }
 
 def fakeinfo(track, n):
     return { 'number': n,
