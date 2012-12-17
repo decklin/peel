@@ -108,7 +108,7 @@ if __name__ == '__main__':
     cp.read([os.path.expanduser('~/.peelrc')])
 
     rip_cmd = cp.get('commands', 'rip', 'cdparanoia')
-    enc_cmd = cp.get('commands', 'encode', 'oggenc')
+    enc_cmd = cp.get('commands', 'encode', 'flac')
 
     rip_opts = cp.get('options', rip_cmd, '')
     enc_opts = cp.get('options', enc_cmd, '')
