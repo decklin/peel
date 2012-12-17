@@ -56,9 +56,9 @@ def trackinfo(track, n):
     else:
         artist_name = release.artist.name
     return { 'number': n,
-             'artist': artist_name,
-             'album': release.title,
-             'title': track.title,
+             'artist': unicode(artist_name),
+             'album': unicode(release.title),
+             'title': unicode(track.title),
              'length': track.duration / 1000,
              'mbid': track.id.split('/')[-1].encode('ascii') }
 
@@ -151,4 +151,4 @@ if __name__ == '__main__':
             if summary:
                 print '%2d. %s - %s' % (t['number'], t['artist'], t['title'])
             else:
-                print yaml.dump(t, explicit_start=True, default_flow_style=False),
+                print yaml.dump(t, allow_unicode=True, explicit_start=True, default_flow_style=False),
