@@ -1,4 +1,4 @@
-Ears
+Peel
 ====
 
 This is a collection of programs that originally accumulated within my
@@ -94,7 +94,7 @@ them to lastfmsubmitd's spool or stdout.
 Requirements
 ============
 
-  * python-musicbrainz, available from
+  * python-musicbrainz2, available from
     http://musicbrainz.org/doc/PythonMusicbrainz.
 
 Author and License
