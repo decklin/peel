@@ -7,21 +7,21 @@ else
 fi
 
 if [ ! -t 0 ]; then
-    echo "peel is now a wrapper script, and will set up a peel-encode"
-    echo "pipeline for you. Run it without sending any data to stdin."
+    printf 'peel is now a wrapper script, and will set up a peel-encode\n'
+    printf 'pipeline for you. Run it without sending any data to stdin.\n'
     exit 2
 fi
 
 until mbget -s; do
-    echo "Could not find disc. Trying to submit to MusicBrainz..."
+    printf 'Could not find disc. Trying to submit to MusicBrainz...\n'
     mbsubmit
-    echo -n "Did that work? (Yes/no) "; read ans
+    printf 'Did that work? ([Y]es/[n]o) '; read ans
     case "$ans" in
         n|no) exit 1;;
     esac
 done
 
-echo -n "Is this data OK? (Yes/edit/quit) "; read ans
+printf 'Is this data OK? ([Y]es/[e]dit/[q]uit) '; read ans
 case "$ans" in
     e|edit) need_edit=1;;
     q|quit) exit 0;;
